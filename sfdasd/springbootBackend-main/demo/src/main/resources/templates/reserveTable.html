@@ -1,0 +1,20 @@
+!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Add Table</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+<h1>Reserve Table</h1>
+<form action="/tables/{id}/reserve" method="POST">
+    <input type="hidden" name="id" value="${table.id}">
+    <label for="names">Names of people:</label>
+    <input type="text" id="names" name="names" required>
+    <label for="time">Reservation time (ISO format):</label>
+    <input type="text" id="time" name="time" required>
+    <button type="submit">Reserve Table</button>
+</form>
+
+</body>
+</html>

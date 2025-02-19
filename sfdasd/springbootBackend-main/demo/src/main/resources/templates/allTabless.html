@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>All Tables</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+<h1>List of Tables</h1>
+
+<!-- Przycisk powrotu do strony index -->
+<h2> </h2>
+
+<table id="tablesTable" border="1">
+    <thead>
+    <tr>
+        <th>ID</th>
+        <th>Seats</th>
+        <th>Reserved At</th>
+        <th>User</th>
+    </tr>
+    </thead>
+    <tbody>
+    <!-- Dynamic content will be inserted here by JavaScript -->
+    </tbody>
+</table>
+
+<script>
+    // Funkcja do pobrania danych z serwera
+    fetch('/allTables')
+        .then(response => response.json()) // Odbierz dane w formacie JSON
+        .then(data => {
+            const tableBody = document.querySelector('#tablesTable tbody'); // Odwołanie do ciała tabeli
+
+            // Iteracja po każdym stoliku i dodanie wiersza do tabeli
+            data.forEach(table => {
+                const row = document.createElement('tr'); // Tworzymy nowy wiersz
+                row.innerHTML = `
+                        <td>${table.id}</td>
+                        <td>${table.seats}</td>
+                        <td>${table.reservedAt ? table.reservedAt : 'Not reserved'}</td>
+                        <td>${table.user ? table.user.username : 'No user'}</td>
+                    `;
+                tableBody.appendChild(row); // Dodajemy wiersz do tabeli
+            });
+        })
+        .catch(error => {
+            console.error('Error fetching tables:', error);
+        });
+</script>
+<a href="/index">Go back to Home</a>
+</body>
+</html>

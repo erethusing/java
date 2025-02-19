@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rezerwacja stolika</title>
+    <style>
+        /* Ogólny styl strony */
+        body {
+            background-color: #000; /* Czarne tło */
+            color: #fff; /* Biały tekst */
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column; /* Układ w kolumnie */
+            justify-content: center; /* Wyśrodkowanie w pionie */
+            align-items: center; /* Wyśrodkowanie w poziomie */
+            height: 100vh; /* Wysokość na 100% widoku */
+            margin: 0;
+            text-align: center; /* Wyśrodkowanie tekstu */
+        }
+
+        /* Styl nagłówka */
+        h1 {
+            font-size: 2rem;
+            margin-bottom: 20px;
+        }
+
+        /* Formularz */
+        form {
+            margin-top: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        /* Styl dla inputa */
+        input[type="datetime-local"], input[type="number"] {
+            padding: 10px;
+            margin-bottom: 10px; /* Odstęp między inputem a przyciskiem */
+            width: 200px;
+            border: 1px solid #444;
+            border-radius: 5px;
+        }
+
+        /* Styl przycisków */
+        button {
+            background-color: #444; /* Ciemnoszary kolor przycisku */
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            cursor: pointer;
+            font-size: 16px;
+            border-radius: 5px;
+            margin-top: 10px; /* Odstęp między przyciskami */
+            transition: background-color 0.3s;
+        }
+
+        button:hover {
+            background-color: #666; /* Jaśniejszy szary na hover */
+        }
+
+        /* Lista dostępnych stolików */
+        #availableTablesList {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr); /* 3 kolumny */
+            gap: 20px;
+            width: 80%;
+            margin-top: 20px;
+        }
+
+        .table-item {
+            background-color: #333; /* Tło stolika */
+            padding: 15px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+        }
+
+        .table-item p {
+            margin: 0;
+            font-size: 1.2rem;
+        }
+
+        .reserveButton {
+            background-color: #666;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            cursor: pointer;
+            font-size: 14px;
+            border-radius: 5px;
+            transition: background-color 0.3s;
+        }
+
+        .reserveButton:hover {
+            background-color: #888;
+        }
+
+        /* Linki */
+        a {
+            color: white;
+            text-decoration: none;
+            margin-top: 20px;
+        }
+
+        a:hover {
+            text-decoration: underline;
+        }
+
+    </style>
+</head>
+<body>
+<h1>Rezerwacja stolika</h1>
+
+<!-- Formularz do podania godziny rezerwacji i liczby osób -->
+<form id="reservationForm">
+    <label for="reservedAt">Wybierz godzinę rezerwacji:</label>
+    <input type="datetime-local" id="reservedAt" name="reservedAt" required>
+
+    <label for="numberOfPeople">Liczba osób:</label>
+    <input type="number" id="numberOfPeople" name="numberOfPeople" min="1" required>
+
+    <button type="submit">Sprawdź dostępne stoliki</button>
+</form>
+
+<hr>
+
+<!-- Lista dostępnych stolików -->
+<h2>Dostępne stoliki:</h2>
+<div id="availableTablesList">
+    <!-- Tutaj pojawią się dostępne stoliki -->
+</div>
+
+<script>
+    document.getElementById("reservationForm").addEventListener("submit", function(event) {
+        event.preventDefault();
+
+        const reservedAt = document.getElementById("reservedAt").value;
+        const numberOfPeople = document.getElementById("numberOfPeople").value;
+
+        // Wykonanie zapytania o dostępne stoliki
+        const formattedDate = reservedAt.split("T").join(" "); // Przemiana daty do formatu, który oczekuje backend
+
+        fetch(`/reservation/available-tables?reservedAt=${formattedDate}&numberOfPeople=${numberOfPeople}`)
+            .then(response => response.json())
+            .then(data => {
+                const availableTablesList = document.getElementById("availableTablesList");
+                availableTablesList.innerHTML = ''; // Czyszczenie listy dostępnych stolików
+
+                if (data && data.length > 0) {
+                    data.forEach(table => {
+                        const tableElement = document.createElement("div");
+                        tableElement.classList.add("table-item");
+
+                        tableElement.innerHTML = `
+                            <p>Stolik ID: ${table.id}</p>
+                            <p>Pojemność: ${table.seats} osób</p> <!-- Zmieniono 'capacity' na 'seats', jeśli tak nazywa się w modelu -->
+                            <button class="reserveButton" data-table-id="${table.id}" data-reserved-at="${formattedDate}">Rezerwuj</button>
+                        `;
+                        availableTablesList.appendChild(tableElement);
+                    });
+
+                    // Dodanie eventu rezerwacji dla każdego stolika
+                    document.querySelectorAll(".reserveButton").forEach(button => {
+                        button.addEventListener("click", function() {
+                            const tableId = this.getAttribute("data-table-id");
+                            const reservedAt = this.getAttribute("data-reserved-at");
+
+                            // Wykonanie rezerwacji
+                            fetch(`/reservation/reserve?tableId=${tableId}&reservedAt=${reservedAt}`, {
+                                method: "POST"
+                            })
+                                .then(response => response.text())
+                                .then(message => {
+                                    alert(message);
+                                })
+                                .catch(error => {
+                                    alert("Błąd podczas rezerwacji.");
+                                });
+                        });
+                    });
+                } else {
+                    availableTablesList.innerHTML = '<p>Brak dostępnych stolików na tę godzinę.</p>';
+                }
+            })
+            .catch(error => {
+                alert("Błąd przy pobieraniu dostępnych stolików.");
+            });
+    });
+
+</script>
+<a href="/index">Go back to Home</a>
+</body>
+</html>

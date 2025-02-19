@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Moje Rezerwacje</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <style>
+        .reservation {
+            margin-bottom: 20px;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+        .reservation button {
+            background-color: red;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            cursor: pointer;
+        }
+        .reservation button:hover {
+            background-color: darkred;
+        }
+    </style>
+</head>
+<body>
+
+<h2>Moje Rezerwacje</h2>
+
+<div id="myReservations">
+    <!-- Rezerwacje będą wyświetlane tutaj -->
+</div>
+
+<script>
+    // Funkcja do pobrania rezerwacji użytkownika z serwera
+    async function fetchReservations() {
+        try {
+            const response = await fetch('/reservation/my-reservations');
+            const reservations = await response.json();
+
+            const reservationsContainer = document.getElementById('myReservations');
+            reservationsContainer.innerHTML = ''; // Czyści istniejącą listę rezerwacji
+
+            reservations.forEach(reservation => {
+                const reservationElement = document.createElement('div');
+                reservationElement.classList.add('reservation');
+                reservationElement.innerHTML = `
+                        <p>Stolik nr ${reservation.table.id} - Data: ${reservation.reservedAt}</p>
+                        <button onclick="cancelReservation(${reservation.id})">Anuluj rezerwację</button>
+                    `;
+                reservationsContainer.appendChild(reservationElement);
+            });
+        } catch (error) {
+            console.error('Błąd pobierania rezerwacji:', error);
+        }
+    }
+
+    // Funkcja do anulowania rezerwacji
+    async function cancelReservation(reservationId) {
+        try {
+            const response = await fetch(`/reservation/cancel/${reservationId}`, {
+                method: 'DELETE'
+            });
+
+            if (response.ok) {
+                alert('Rezerwacja została anulowana.');
+                fetchReservations(); // Odświeżenie listy rezerwacji
+            } else {
+                alert('Błąd podczas anulowania rezerwacji.');
+            }
+        } catch (error) {
+            console.error('Błąd podczas anulowania rezerwacji:', error);
+        }
+    }
+
+    // Ładowanie rezerwacji po załadowaniu strony
+    window.onload = fetchReservations;
+</script>
+<a href="/index">Go back to Home</a>
+</body>
+</html>
